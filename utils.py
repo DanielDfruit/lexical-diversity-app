@@ -22,8 +22,8 @@ def search_books(query, max_results=10):
         for _, row in matches.iterrows()
     ]
 
-def clean_text(raw_bytes):
-    text = raw_bytes.decode('utf-8', errors='ignore')
+def clean_text(text: str):
+    # Already decoded at this point
     text = re.sub(r'\r\n', ' ', text)
     start = text.find("*** START OF")
     end = text.find("*** END OF")
