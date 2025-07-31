@@ -2,6 +2,25 @@ from gutenbergpy.textget import get_text_by_id
 from nltk.tokenize import word_tokenize
 import re
 
+import pandas as pd
+from gutenbergpy import gutenbergcache
+
+def search_books(query, max_results=10):
+    cache = gutenbergcache.GutenbergCache.get_cache()
+    metadata = cache.df
+    metadata = metadata.dropna(subset=["title"])
+    query_lower = query.lower()
+
+    matches = metadata[
+        metadata["title"].str.lower().str.contains(query_lower, na=False)
+        | metadata["author"].str.lower().str.contains(query_lower, na=False)
+    ].head(max_results)
+
+    return [
+        {"id": int(row["id"]), "title": row["title"], "author": row.get("author", "")}
+        for _, row in matches.iterrows()
+    ]
+
 def clean_text(raw_bytes):
     text = raw_bytes.decode('utf-8', errors='ignore')
     text = re.sub(r'\r\n', ' ', text)
