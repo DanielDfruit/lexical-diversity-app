@@ -60,3 +60,24 @@ def compute_ttr_series_rolling(tokens, window_size=200, step=50):
         ttr_list.append({"position": i, "ttr": ttr})
     return ttr_list
 
+def compute_rttr_series_cumulative(text):
+    words = tokenize_text(text)
+    seen = set()
+    rttr_list = []
+    for i, word in enumerate(words):
+        seen.add(word)
+        length = i + 1
+        rttr = len(seen) / (length ** 0.5)
+        rttr_list.append({"position": length, "ttr": rttr})
+    return rttr_list
+
+def compute_cttr_series_cumulative(text):
+    words = tokenize_text(text)
+    seen = set()
+    cttr_list = []
+    for i, word in enumerate(words):
+        seen.add(word)
+        length = i + 1
+        cttr = len(seen) / ((2 * length) ** 0.5)
+        cttr_list.append({"position": length, "ttr": cttr})
+    return cttr_list
