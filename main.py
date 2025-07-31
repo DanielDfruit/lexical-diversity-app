@@ -79,4 +79,5 @@ def get_ttr(
             "ttr_curve": ttr_series
         }
     except Exception as e:
+        print("Full exception:\n", traceback.format_exc())
         return {"error": str(e)}
