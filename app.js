@@ -101,6 +101,7 @@ function clearMetadata(role) {
   if (el) el.remove();
 }
 
+
   section.innerHTML = `
     <h3>${role === "primary" ? "Primary Book" : "Comparison Book"}</h3>
     <p><strong>Title:</strong> ${book.title}</p>
