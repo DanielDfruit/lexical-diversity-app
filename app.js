@@ -102,6 +102,7 @@ async function fetchTTR() {
   const bookId = document.getElementById('bookId').value;
   const compareId = document.getElementById('compareId').value;
   const mode = document.getElementById('mode').value;
+  const metric = document.getElementById('metric').value;
   const windowSize = document.getElementById('windowSize').value;
   const step = document.getElementById('step').value;
 
@@ -110,11 +111,14 @@ async function fetchTTR() {
     return;
   }
 
-  const params = new URLSearchParams({ mode });
-  if (mode === "rolling") {
-    params.set("window_size", windowSize);
-    params.set("step", step);
-  }
+const params = new URLSearchParams();
+params.set("mode", mode);
+params.set("metric", metric);  // 👈 add metric
+
+if (mode === "rolling") {
+  params.set("window_size", windowSize);
+  params.set("step", step);
+}
 
   const svg = d3.select("#ttrPlot");
   svg.selectAll("*").remove();
