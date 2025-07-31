@@ -41,3 +41,35 @@ async function fetchTTR() {
         .y(d => y(d.ttr))
     );
 }
+
+async function searchBooks() {
+  const query = document.getElementById('searchBox').value.trim();
+  if (!query) return;
+
+  const response = await fetch(`https://lexical-diversity-app.onrender.com/search?query=${encodeURIComponent(query)}`);
+  const results = await response.json();
+
+  const resultsList = document.getElementById('resultsList');
+  resultsList.innerHTML = "";
+
+  results.forEach(book => {
+    const li = document.createElement("li");
+    li.textContent = `${book.title} (ID: ${book.id})`;
+    li.style.cursor = "pointer";
+    li.onclick = () => {
+      document.getElementById("bookId").value = book.id;
+      fetchTTR();
+    };
+    resultsList.appendChild(li);
+  });
+}
+
+// Optional: trigger search when typing
+document.addEventListener("DOMContentLoaded", () => {
+  const searchBox = document.getElementById("searchBox");
+  searchBox.addEventListener("keypress", (e) => {
+    if (e.key === "Enter") {
+      searchBooks();
+    }
+  });
+});
