@@ -60,8 +60,10 @@ def get_ttr(
     step: int = Query(50, ge=1, le=1000)
 ):
     try:
-        raw = get_text_by_id(book_id)
-        text = clean_text(raw)
+        raw_bytes = get_text_by_id(book_id)
+        raw_text = raw_bytes.decode('utf-8', errors='ignore')  # Decode the binary content
+        text = clean_text(raw_text)
+
 
         if mode == "cumulative":
             ttr_series = compute_ttr_series_cumulative(text)
