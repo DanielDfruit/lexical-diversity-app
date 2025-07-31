@@ -8,7 +8,12 @@ async function fetchTTR() {
   const response = await fetch(url);
   const data = await response.json();
 
+  
+  console.log(data);  // 🔍 See what you're actually getting
+
   const ttrData = data.ttr_curve;
+  const response = await fetch(url);
+
 
   const margin = {top: 20, right: 30, bottom: 30, left: 50},
         width = +svg.attr("width") - margin.left - margin.right,
