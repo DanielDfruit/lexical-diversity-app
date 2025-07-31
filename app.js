@@ -24,6 +24,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   document.getElementById("searchBtn").addEventListener("click", searchBooks);
   document.getElementById("mode").addEventListener("change", updateModeUI);
+  document.getElementById("analyzeBtn").addEventListener("click", fetchTTR);
 
   const searchBox = document.getElementById("searchBox");
   if (searchBox) {
@@ -69,7 +70,13 @@ function displayMetadata(book) {
 }
 
 async function fetchTTR() {
-  const bookId = document.getElementById('bookId').value;
+  const bookIdEl = document.getElementById('bookId');
+  if (!bookIdEl || !bookIdEl.value) {
+    alert("Please select or enter a book ID.");
+    return;
+  }
+
+  const bookId = bookIdEl.value;
   const mode = document.getElementById('mode').value;
   const windowSize = document.getElementById('windowSize').value;
   const step = document.getElementById('step').value;
@@ -118,6 +125,26 @@ async function fetchTTR() {
     g.append("g")
       .call(d3.axisLeft(y));
 
+    const tooltip = d3.select("body").append("div")
+      .attr("class", "tooltip")
+      .style("opacity", 0);
+
+    g.selectAll("circle")
+      .data(ttrData.filter((_, i) => i % Math.ceil(ttrData.length / 100) === 0)) // sample for performance
+      .enter()
+      .append("circle")
+      .attr("cx", d => x(d.position))
+      .attr("cy", d => y(d.ttr))
+      .attr("r", 3)
+      .attr("fill", "darkorange")
+      .on("mouseover", function(event, d) {
+        tooltip.transition().duration(200).style("opacity", .9);
+        tooltip.html(`Word #${d.position}<br>TTR: ${d.ttr.toFixed(3)}`)
+          .style("left", `${event.pageX + 15}px`)
+          .style("top", `${event.pageY - 20}px`);
+      })
+      .on("mouseout", () => tooltip.transition().duration(500).style("opacity", 0));
+    
     g.append("path")
       .datum(ttrData)
       .attr("fill", "none")
@@ -127,6 +154,7 @@ async function fetchTTR() {
           .x(d => x(d.position))
           .y(d => y(d.ttr))
       );
+
   } catch (err) {
     console.error("Error fetching or drawing TTR:", err);
     alert("Failed to fetch or display data.");
