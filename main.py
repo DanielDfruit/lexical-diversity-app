@@ -6,6 +6,14 @@ from gutenbergpy.textget import get_text_by_id
 from gutenbergpy.gutenbergcache import GutenbergCache
 from utils import compute_ttr_series_cumulative, compute_ttr_series_rolling, clean_text
 
+from utils import (
+    compute_rttr_series_cumulative,
+    compute_cttr_series_cumulative,
+    compute_mtld_cumulative,
+    compute_hdd_cumulative
+)
+
+
 app = FastAPI()
 
 # 👇 Add this block early, after initializing app
@@ -66,7 +74,7 @@ def get_ttr(
 
         text = clean_text(raw_text, exclude_stopwords=exclude_stopwords)
 
-        if not text or len(text.split()) < 100:
+        if not text or len(text) < 100:
             raise ValueError("Text too short after cleaning.")
 
         if mode == "cumulative":
