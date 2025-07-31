@@ -157,7 +157,33 @@ if (mode === "rolling") {
     const y = d3.scaleLinear()
       .domain([0, 1])
       .range([height, 0]);
+    
+  const zoom = d3.zoom()
+    .scaleExtent([1, 10])
+    .translateExtent([[0, 0], [800, 500]])
+    .on("zoom", (event) => {
+      container.attr("transform", event.transform);
+    });
 
+  // Handle zoom toggle
+  let zoomEnabled = false;
+  
+  d3.select("#zoom-toggle").on("click", function () {
+    zoomEnabled = !zoomEnabled;
+    if (zoomEnabled) {
+      svg.call(zoom);
+      d3.select(this).text("Disable Zoom");
+    } else {
+      svg.on(".zoom", null);
+      d3.select(this).text("Enable Zoom");
+      container.attr("transform", null);
+    }
+  });
+
+ // Optional reset button
+  d3.select("#reset-zoom").on("click", () => {
+    svg.transition().duration(750).call(zoom.transform, d3.zoomIdentity);
+  });
     // Gridlines
     g.append("g")
       .call(d3.axisLeft(y).ticks(10).tickSize(-width).tickFormat(""))
