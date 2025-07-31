@@ -1,9 +1,89 @@
 body {
-  font-family: Arial, sans-serif;
-  padding: 20px;
+  font-family: "Segoe UI", Roboto, sans-serif;
+  background: #f9f9f9;
+  margin: 0;
+  padding: 2em;
+  color: #222;
+  line-height: 1.6;
 }
 
-label, input, button {
-  font-size: 16px;
-  margin: 8px;
+h1 {
+  text-align: center;
+  color: #333;
+}
+
+label {
+  font-weight: 600;
+  margin-right: 0.5em;
+}
+
+input[type="text"],
+input[type="number"],
+select {
+  padding: 0.4em 0.6em;
+  font-size: 1em;
+  margin-bottom: 0.6em;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+}
+
+button {
+  padding: 0.5em 1em;
+  background-color: #007acc;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: bold;
+}
+
+button:hover {
+  background-color: #005fa3;
+}
+
+#resultsList {
+  list-style-type: none;
+  padding-left: 0;
+  margin-top: 1em;
+  max-height: 200px;
+  overflow-y: auto;
+  border: 1px solid #ddd;
+  background: white;
+  border-radius: 4px;
+}
+
+#resultsList li {
+  padding: 0.5em;
+  border-bottom: 1px solid #eee;
+}
+
+#resultsList li:hover {
+  background-color: #f0f8ff;
+}
+
+#bookMeta {
+  background: #fff;
+  padding: 1em;
+  margin-top: 1em;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+}
+
+svg {
+  background: #fff;
+  border: 1px solid #ccc;
+  margin-top: 2em;
+  display: block;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+#loading {
+  margin-left: 1em;
+  font-style: italic;
+  color: #666;
+}
+
+#rollingParams {
+  margin-top: 1em;
 }
