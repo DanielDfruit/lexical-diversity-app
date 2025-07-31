@@ -2,7 +2,6 @@ from gutenbergpy.textget import get_text_by_id
 from nltk.tokenize import word_tokenize
 import re
 
-import pandas as pd
 from gutenbergpy import gutenbergcache
 
 def search_books(query, max_results=10):
