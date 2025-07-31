@@ -9,58 +9,62 @@
 <body>
   <h1>Lexical Diversity Explorer</h1>
 
+  <!-- TTR Explanation -->
   <div id="ttrExplanation" style="max-width: 800px; margin: 1em auto; background: #fff; padding: 1em; border: 1px solid #ddd; border-radius: 6px;">
-    <h2>What is TTR?</h2>
-    <p><strong>Token Type Ratio (TTR)</strong> measures lexical diversity — how rich or repetitive a vocabulary is. It is calculated as:</p>
-    <p style="margin-left: 1em;"><code>TTR = Number of unique words ÷ Total number of words</code></p>
-    <p>Higher TTR means more varied vocabulary. Lower TTR indicates more repetition. Since TTR declines with longer texts, this app lets you analyze:</p>
-    <ul>
-      <li><strong>Cumulative TTR</strong>: From start to finish.</li>
-      <li><strong>Rolling TTR</strong>: Sliding window view for local diversity.</li>
-    </ul>
+    <h2 style="margin-top: 0;">What is TTR?</h2>
+    <p><strong>Token Type Ratio (TTR)</strong> measures how varied the vocabulary is in a text.</p>
+    <p style="margin-left: 1em;">
+      <strong>Formula:</strong><br>
+      <code>TTR = Number of unique words ÷ Total number of words</code>
+    </p>
+    <p>Higher TTR means more lexical variety. Cumulative TTR shows growth over time, while Rolling TTR uses fixed-size word windows.</p>
   </div>
 
-  <div style="margin-bottom: 1em;">
-    <h3>Book 1</h3>
-    <label for="searchBox1">Search:</label>
-    <input type="text" id="searchBox1" placeholder="Enter book title or keyword...">
-    <button onclick="searchBooks(1)">Search</button>
-    <ul id="resultsList1"></ul>
-    <label for="bookId1">Book ID:</label>
-    <input type="number" id="bookId1" placeholder="Select or enter manually">
-    <div id="bookMeta1"></div>
+  <!-- Search and Book Selection -->
+  <div style="max-width: 800px; margin: auto;">
+    <div>
+      <label for="searchBox">Search Project Gutenberg Books:</label>
+      <input type="text" id="searchBox" placeholder="Enter book title or author...">
+      <button id="searchBtn">Search</button>
+    </div>
+
+    <ul id="resultsList"></ul>
+
+    <div style="margin-top: 1em;">
+      <label for="bookId">Primary Book ID:</label>
+      <input type="number" id="bookId" placeholder="Click a result or enter manually">
+
+      <label for="compareId" style="margin-left: 1em;">Comparison Book ID (optional):</label>
+      <input type="number" id="compareId" placeholder="Optional second book">
+    </div>
+
+    <div id="bookMeta" style="margin: 1em 0;"></div>
+
+    <!-- Mode & Rolling Parameters -->
+    <div>
+      <label for="mode">TTR Mode:</label>
+      <select id="mode">
+        <option value="cumulative">Cumulative</option>
+        <option value="rolling">Rolling</option>
+      </select>
+    </div>
+
+    <div id="rollingParams" style="display: none;">
+      <label id="windowLabel" for="windowSize">Window Size:</label>
+      <input type="number" id="windowSize" value="200" min="10" max="1000">
+      <label id="stepLabel" for="step">Step:</label>
+      <input type="number" id="step" value="50" min="1" max="1000">
+    </div>
+
+    <!-- Action Button -->
+    <div style="margin-top: 1em;">
+      <button id="analyzeBtn">Build Graph</button>
+      <span id="loading" style="display: none;">⏳ Loading...</span>
+    </div>
+
+    <!-- Plot -->
+    <svg id="ttrPlot" width="800" height="400"></svg>
   </div>
-
-  <div style="margin-bottom: 1em;">
-    <h3>Book 2 (optional)</h3>
-    <label for="searchBox2">Search:</label>
-    <input type="text" id="searchBox2" placeholder="Enter book title or keyword...">
-    <button onclick="searchBooks(2)">Search</button>
-    <ul id="resultsList2"></ul>
-    <label for="bookId2">Book ID:</label>
-    <input type="number" id="bookId2" placeholder="Select or enter manually">
-    <div id="bookMeta2"></div>
-  </div>
-
-  <div>
-    <label for="mode">TTR Mode:</label>
-    <select id="mode" onchange="updateModeVisibility()">
-      <option value="cumulative">Cumulative</option>
-      <option value="rolling">Rolling</option>
-    </select>
-  </div>
-
-  <div id="rollingParams" style="display: none;">
-    <label for="windowSize">Window Size:</label>
-    <input type="number" id="windowSize" value="200" min="10" max="1000">
-    <label for="step">Step:</label>
-    <input type="number" id="step" value="50" min="1" max="1000">
-  </div>
-
-  <button id="analyzeBtn" onclick="compareTTR()">Compare Texts</button>
-  <span id="loading" style="display: none;">⏳ Loading...</span>
-
-  <svg id="ttrPlot" width="800" height="400"></svg>
 
   <script src="https://d3js.org/d3.v7.min.js"></script>
   <script src="app.js"></script>
