@@ -12,11 +12,8 @@ async function loadBookList() {
 
 function updateModeUI() {
   const mode = document.getElementById("mode").value;
-  const show = mode === "rolling";
-  document.getElementById("windowSize").style.display = show ? "inline-block" : "none";
-  document.getElementById("step").style.display = show ? "inline-block" : "none";
-  document.getElementById("windowLabel").style.display = show ? "inline-block" : "none";
-  document.getElementById("stepLabel").style.display = show ? "inline-block" : "none";
+  const rollingParams = document.getElementById("rollingParams");
+  rollingParams.style.display = (mode === "rolling") ? "block" : "none";
 }
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -33,7 +30,7 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  updateModeUI(); // Initialize visibility
+  updateModeUI();
 });
 
 function searchBooks() {
@@ -65,7 +62,6 @@ function searchBooks() {
         compareIdInput.value = book.id;
         displayMetadata(book, "compare");
       } else {
-        // Replace primary if both are filled
         bookIdInput.value = book.id;
         displayMetadata(book, "primary");
         compareIdInput.value = "";
@@ -84,6 +80,7 @@ function displayMetadata(book, role) {
   if (!section) {
     section = document.createElement("div");
     section.id = sectionId;
+    section.classList.add("book-meta-card");
     container.appendChild(section);
   }
 
@@ -100,7 +97,6 @@ function clearMetadata(role) {
   const el = document.getElementById(id);
   if (el) el.remove();
 }
-
 
 async function fetchTTR() {
   const bookId = document.getElementById('bookId').value;
@@ -143,7 +139,7 @@ async function fetchTTR() {
     const fetches = [bookId, compareId].filter(Boolean).map(fetchSingle);
     const results = await Promise.all(fetches);
 
-    const margin = { top: 50, right: 30, bottom: 50, left: 60 },
+    const margin = { top: 50, right: 120, bottom: 50, left: 60 },
           width = +svg.attr("width") - margin.left - margin.right,
           height = +svg.attr("height") - margin.top - margin.bottom;
 
@@ -160,29 +156,32 @@ async function fetchTTR() {
 
     // Gridlines
     g.append("g")
-      .attr("class", "grid")
-      .call(d3.axisLeft(y).ticks(10).tickSize(-width).tickFormat(""));
+      .call(d3.axisLeft(y).ticks(10).tickSize(-width).tickFormat(""))
+      .attr("stroke-opacity", 0.2);
 
     // X Axis
     g.append("g")
       .attr("transform", `translate(0,${height})`)
-      .call(d3.axisBottom(x).ticks(10).tickFormat(d3.format(",")))
-      .append("text")
-      .attr("x", width / 2)
-      .attr("y", 40)
-      .attr("fill", "#000")
-      .attr("text-anchor", "middle")
-      .text("Word Position");
+      .call(d3.axisBottom(x).ticks(10).tickFormat(d3.format(",")));
 
     // Y Axis
     g.append("g")
-      .call(d3.axisLeft(y).ticks(10))
-      .append("text")
-      .attr("transform", "rotate(-90)")
-      .attr("x", -height / 2)
-      .attr("y", -45)
-      .attr("fill", "#000")
+      .call(d3.axisLeft(y).ticks(10));
+
+    // Axis Labels
+    svg.append("text")
+      .attr("x", (width + margin.left + margin.right) / 2)
+      .attr("y", height + margin.top + 40)
       .attr("text-anchor", "middle")
+      .style("font-size", "14px")
+      .text("Word Position");
+
+    svg.append("text")
+      .attr("transform", `rotate(-90)`)
+      .attr("x", -(height + margin.top + margin.bottom) / 2)
+      .attr("y", 20)
+      .attr("text-anchor", "middle")
+      .style("font-size", "14px")
       .text("Token Type Ratio (TTR)");
 
     // Title
@@ -203,18 +202,18 @@ async function fetchTTR() {
     const tooltip = d3.select("body").append("div")
       .attr("class", "tooltip")
       .style("position", "absolute")
-      .style("background", "rgba(255,255,255,0.9)")
+      .style("background", "rgba(255,255,255,0.95)")
       .style("padding", "6px 10px")
       .style("border", "1px solid #ccc")
       .style("border-radius", "4px")
       .style("pointer-events", "none")
-      .style("display", "none");
+      .style("display", "none")
+      .style("font-size", "13px");
 
     results.forEach((result, idx) => {
       const color = colors[idx % colors.length];
       const sampled = result.data.filter((_, i) => i % Math.ceil(result.data.length / 100) === 0);
 
-      // Line
       g.append("path")
         .datum(result.data)
         .attr("fill", "none")
@@ -222,7 +221,6 @@ async function fetchTTR() {
         .attr("stroke-width", 2)
         .attr("d", line);
 
-      // Points
       g.selectAll(`circle.book-${idx}`)
         .data(sampled)
         .enter()
@@ -233,9 +231,13 @@ async function fetchTTR() {
         .attr("r", 3)
         .attr("fill", color)
         .on("mouseover", (event, d) => {
-          tooltip.style("display", "block")
-            .html(`Book ID: ${result.id}<br>Word #${d3.format(",")(d.position)}<br>TTR: ${d.ttr.toFixed(3)}`)
-            .style("left", `${event.pageX + 10}px`)
+          tooltip
+            .style("display", "block")
+            .html(`Book ID: <b>${result.id}</b><br>Word #: ${d3.format(",")(d.position)}<br>TTR: ${d.ttr.toFixed(3)}`);
+        })
+        .on("mousemove", (event) => {
+          tooltip
+            .style("left", `${event.pageX + 12}px`)
             .style("top", `${event.pageY - 28}px`);
         })
         .on("mouseout", () => tooltip.style("display", "none"));
@@ -243,8 +245,8 @@ async function fetchTTR() {
 
     // Legend
     const legend = svg.append("g")
-      .attr("transform", `translate(${width - 100},${margin.top})`);
-    
+      .attr("transform", `translate(${width + margin.left + 10},${margin.top})`);
+
     results.forEach((result, idx) => {
       const color = colors[idx % colors.length];
       const label = idx === 0 ? "Primary Book" : "Comparison Book";
@@ -271,4 +273,3 @@ async function fetchTTR() {
     loading.style.display = "none";
   }
 }
-
