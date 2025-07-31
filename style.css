@@ -87,3 +87,16 @@ svg {
 #rollingParams {
   margin-top: 1em;
 }
+
+.tooltip {
+  font-family: sans-serif;
+  font-size: 13px;
+}
+.grid line {
+  stroke: lightgray;
+  stroke-opacity: 0.7;
+  shape-rendering: crispEdges;
+}
+.grid path {
+  stroke-width: 0;
+}
