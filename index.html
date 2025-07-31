@@ -130,13 +130,23 @@
     <!-- Metadata Cards -->
     <div id="bookMeta"></div>
 
-    <!-- Mode & Rolling Parameters -->
+        <!-- Mode, Metric, and Rolling Parameters -->
     <div class="input-row">
       <div>
         <label for="mode">TTR Mode:</label><br>
         <select id="mode">
           <option value="cumulative">Cumulative</option>
           <option value="rolling">Rolling</option>
+        </select>
+      </div>
+      <div>
+        <label for="metric">Metric:</label><br>
+        <select id="metric">
+          <option value="ttr" selected>TTR</option>
+          <option value="rttr">RTTR</option>
+          <option value="cttr">CTTR</option>
+          <option value="mtld">MTLD</option>
+          <option value="hdd">HD-D</option>
         </select>
       </div>
       <div id="rollingParams" style="display: none;">
@@ -146,6 +156,7 @@
         <input type="number" id="step" value="50" min="1" max="1000">
       </div>
     </div>
+
 
     <!-- Build Button -->
     <div style="margin-top: 1em;">
