@@ -80,3 +80,52 @@ def compute_cttr_series_cumulative(tokens):
         cttr = len(seen) / ((2 * length) ** 0.5)
         cttr_list.append({"position": length, "ttr": cttr})
     return cttr_list
+
+def compute_mtld_cumulative(tokens, ttr_threshold=0.72, min_segment_length=10):
+    factors = 0
+    token_count = 0
+    types = set()
+    mtld_series = []
+    i = 0
+
+    for word in tokens:
+        token_count += 1
+        types.add(word)
+        ttr = len(types) / token_count
+
+        if ttr <= ttr_threshold and token_count >= min_segment_length:
+            factors += 1
+            mtld_series.append({"position": i + 1, "ttr": len(tokens) / (factors if factors > 0 else 1)})
+            token_count = 0
+            types.clear()
+
+        i += 1
+
+    if token_count > 0:
+        excess = len(types) / ttr_threshold
+        factors += 1 if excess else 0
+
+    if factors == 0:
+        return [{"position": len(tokens), "ttr": 0}]
+
+    return [{"position": len(tokens), "ttr": len(tokens) / factors}]
+
+
+import math
+from collections import Counter
+
+def compute_hdd_cumulative(tokens, sample_size=42):
+    freqs = Counter(tokens)
+    N = len(tokens)
+    hdd_value = 0.0
+
+    for word, freq in freqs.items():
+        if freq == 0 or N == 0 or sample_size > N:
+            continue
+        try:
+            prob_zero = math.comb(N - freq, sample_size) / math.comb(N, sample_size)
+            hdd_value += (1 - prob_zero)
+        except ValueError:
+            continue
+
+    return [{"position": len(tokens), "ttr": hdd_value}]
