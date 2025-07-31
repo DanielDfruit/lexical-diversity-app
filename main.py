@@ -5,6 +5,14 @@ from utils import compute_ttr_series_cumulative, compute_ttr_series_rolling, cle
 
 app = FastAPI()
 
+# 👇 Add this block early, after initializing app
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["https://beautiful-rabanadas-cbdf08.netlify.app"],  # or ["*"] for dev
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
