@@ -23,32 +23,39 @@ def search_books(query, max_results=10):
         for _, row in matches.iterrows()
     ]
 
-# --- Strip boilerplate ---
-def clean_text(text: str):
+import re
+from sklearn.feature_extraction.text import ENGLISH_STOP_WORDS
+
+def clean_text(text: str, exclude_stopwords: bool = False):
     text = re.sub(r'\r\n', ' ', text)
     start = text.find("*** START OF")
     end = text.find("*** END OF")
     if start != -1 and end != -1 and end > start:
         text = text[start:end]
-    return text.strip()
+
+    tokens = re.findall(r'\b\w+\b', text.lower())
+
+    if exclude_stopwords:
+        tokens = [t for t in tokens if t not in ENGLISH_STOP_WORDS]
+
+    return tokens
 
 # --- Cumulative TTR ---
-def compute_ttr_series_cumulative(text):
-    words = tokenize_text(text)
+# --- Cumulative TTR ---
+def compute_ttr_series_cumulative(tokens):
     seen = set()
     ttr_list = []
-    for i, word in enumerate(words):
+    for i, word in enumerate(tokens):
         seen.add(word)
         ttr = len(seen) / (i + 1)
         ttr_list.append({"position": i + 1, "ttr": ttr})
     return ttr_list
 
 # --- Rolling window TTR ---
-def compute_ttr_series_rolling(text, window_size=200, step=50):
-    words = tokenize_text(text)
+def compute_ttr_series_rolling(tokens, window_size=200, step=50):
     ttr_list = []
-    for i in range(0, len(words) - window_size + 1, step):
-        window = words[i:i + window_size]
+    for i in range(0, len(tokens) - window_size + 1, step):
+        window = tokens[i:i + window_size]
         ttr = len(set(window)) / len(window)
         ttr_list.append({"position": i, "ttr": ttr})
     return ttr_list
