@@ -10,10 +10,35 @@ async function loadBookList() {
   }
 }
 
+function updateModeUI() {
+  const mode = document.getElementById("mode").value;
+  const show = mode === "rolling";
+  document.getElementById("windowSize").style.display = show ? "inline-block" : "none";
+  document.getElementById("step").style.display = show ? "inline-block" : "none";
+  document.getElementById("windowLabel").style.display = show ? "inline-block" : "none";
+  document.getElementById("stepLabel").style.display = show ? "inline-block" : "none";
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+  loadBookList();
+
+  document.getElementById("searchBtn").addEventListener("click", searchBooks);
+  document.getElementById("mode").addEventListener("change", updateModeUI);
+
+  const searchBox = document.getElementById("searchBox");
+  if (searchBox) {
+    searchBox.addEventListener("keypress", (e) => {
+      if (e.key === "Enter") searchBooks();
+    });
+  }
+
+  updateModeUI(); // Initialize visibility
+});
+
 function searchBooks() {
   const query = document.getElementById('searchBox').value.trim().toLowerCase();
-  const dropdown = document.getElementById("resultsDropdown");
-  const buildButton = document.getElementById("buildGraphBtn");
+  const resultsList = document.getElementById('resultsList');
+  resultsList.innerHTML = "";
 
   if (!query || query.length < 3) return;
 
@@ -22,43 +47,55 @@ function searchBooks() {
     (book.author && book.author.toLowerCase().includes(query))
   );
 
-  dropdown.innerHTML = "";
   matches.slice(0, 25).forEach(book => {
-    const option = document.createElement("option");
-    option.value = book.id;
-    option.textContent = `${book.title} by ${book.author} (ID: ${book.id})`;
-    dropdown.appendChild(option);
+    const li = document.createElement("li");
+    li.textContent = `${book.title} by ${book.author} (ID: ${book.id})`;
+    li.style.cursor = "pointer";
+    li.onclick = () => {
+      document.getElementById("bookId").value = book.id;
+      displayMetadata(book);
+    };
+    resultsList.appendChild(li);
   });
-
-  if (matches.length > 0) {
-    dropdown.style.display = "inline-block";
-    buildButton.style.display = "inline-block";
-  } else {
-    dropdown.style.display = "none";
-    buildButton.style.display = "none";
-  }
 }
 
-async function fetchTTR(bookId = null) {
-  if (!bookId) {
-    bookId = document.getElementById('resultsDropdown').value || document.getElementById('bookId').value;
+function displayMetadata(book) {
+  const meta = document.getElementById("bookMeta");
+  meta.innerHTML = `
+    <p><strong>Title:</strong> ${book.title}</p>
+    <p><strong>Author:</strong> ${book.author || "Unknown"}</p>
+    <p><strong>Book ID:</strong> ${book.id}</p>
+  `;
+}
+
+async function fetchTTR() {
+  const bookId = document.getElementById('bookId').value;
+  const mode = document.getElementById('mode').value;
+  const windowSize = document.getElementById('windowSize').value;
+  const step = document.getElementById('step').value;
+
+  const url = new URL(`https://lexical-diversity-app.onrender.com/ttr`);
+  url.searchParams.set("book_id", bookId);
+  url.searchParams.set("mode", mode);
+  if (mode === "rolling") {
+    url.searchParams.set("window_size", windowSize);
+    url.searchParams.set("step", step);
   }
 
-  if (!bookId) return;
-
-  const url = `https://lexical-diversity-app.onrender.com/ttr?book_id=${bookId}`;
   const svg = d3.select("#ttrPlot");
   svg.selectAll("*").remove();
+
+  const analyzeBtn = document.getElementById("analyzeBtn");
+  const loading = document.getElementById("loading");
+  analyzeBtn.disabled = true;
+  loading.style.display = "inline";
 
   try {
     const response = await fetch(url);
     const data = await response.json();
 
-    if (!Array.isArray(data.ttr_curve)) {
-      throw new Error("Malformed or missing TTR data");
-    }
-
     const ttrData = data.ttr_curve;
+    if (!Array.isArray(ttrData)) throw new Error("Malformed or missing TTR data");
 
     const margin = { top: 20, right: 30, bottom: 30, left: 50 },
           width = +svg.attr("width") - margin.left - margin.right,
@@ -92,25 +129,9 @@ async function fetchTTR(bookId = null) {
       );
   } catch (err) {
     console.error("Error fetching or drawing TTR:", err);
+    alert("Failed to fetch or display data.");
+  } finally {
+    analyzeBtn.disabled = false;
+    loading.style.display = "none";
   }
 }
-
-document.addEventListener("DOMContentLoaded", () => {
-  loadBookList();
-
-  document.getElementById("searchBtn").addEventListener("click", searchBooks);
-
-  document.getElementById("buildGraphBtn").addEventListener("click", () => {
-    const bookId = document.getElementById("resultsDropdown").value;
-    fetchTTR(bookId);
-  });
-
-  const searchBox = document.getElementById("searchBox");
-  if (searchBox) {
-    searchBox.addEventListener("keypress", (e) => {
-      if (e.key === "Enter") {
-        searchBooks();
-      }
-    });
-  }
-});
