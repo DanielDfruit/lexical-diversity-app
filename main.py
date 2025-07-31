@@ -1,6 +1,12 @@
 import nltk
-nltk.download('punkt')
+import os
 
+# Manually set download dir (helps with Render compatibility)
+nltk_data_dir = os.path.join(os.getcwd(), 'nltk_data')
+nltk.download('punkt', download_dir=nltk_data_dir)
+
+# Make sure nltk uses this dir when loading
+nltk.data.path.append(nltk_data_dir)
 from fastapi import FastAPI, Query, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 import traceback
