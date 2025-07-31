@@ -58,8 +58,13 @@ def get_ttr(
 ):
     try:
         try:
-            raw_bytes = get_text_by_id(book_id)
-            raw_text = raw_bytes.decode('utf-8', errors='ignore')
+            raw = get_text_by_id(book_id)
+            if isinstance(raw, bytes):
+                raw_text = raw.decode('utf-8', errors='ignore')
+            elif isinstance(raw, str):
+                raw_text = raw
+            else:
+                raise TypeError(f"Unexpected return type from get_text_by_id: {type(raw)}")
         except Exception as e:
             raise RuntimeError(f"Gutenberg download/decode failed: {e}")
 
