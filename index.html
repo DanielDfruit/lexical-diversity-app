@@ -8,18 +8,19 @@
 </head>
 <body>
   <h1>Lexical Diversity Explorer</h1>
+  <p>Analyze the lexical diversity (vocabulary richness) of public domain books from Project Gutenberg. Search for a title or author, choose a book, and build the graph.</p>
 
   <div>
     <label for="searchBox">Search Project Gutenberg Books:</label>
-    <input type="text" id="searchBox" placeholder="Enter book title or keyword...">
-    <ul id="resultsList"></ul>
+    <input type="text" id="searchBox" placeholder="Enter book title or author...">
+    <button id="searchBtn">Search</button>
+    <br><br>
+    <label for="resultsDropdown">Select a book:</label>
+    <select id="resultsDropdown" style="display: none;"></select>
+    <button id="buildGraphBtn" style="display: none;">Build Graph</button>
   </div>
 
-  <div>
-    <label for="bookId">Or enter Book ID manually:</label>
-    <input type="number" id="bookId" value="1342">
-    <button onclick="fetchTTR()">Analyze</button>
-  </div>
+  <br>
 
   <svg id="ttrPlot" width="800" height="400"></svg>
 
