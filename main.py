@@ -1,14 +1,12 @@
-from fastapi import FastAPI, Query
-from fastapi.middleware.cors import CORSMiddleware
 from gutenbergpy.textget import get_text_by_id
 from utils import compute_ttr_series_cumulative, compute_ttr_series_rolling, clean_text
-
 import nltk
-try:
-    nltk.data.find("tokenizers/punkt")
-except LookupError:
-    nltk.download("punkt")
+nltk.download('punkt')
 
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+
+app = FastAPI()
 app = FastAPI()
 
 # 👇 Add this block early, after initializing app
