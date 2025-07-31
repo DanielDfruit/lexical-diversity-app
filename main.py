@@ -56,18 +56,20 @@ def get_ttr(
     window_size: int = Query(200, ge=10, le=1000),
     step: int = Query(50, ge=1, le=1000)
 ):
+    import traceback
     try:
-        try:
-            raw = get_text_by_id(book_id)
-            if isinstance(raw, bytes):
-                raw_text = raw.decode('utf-8', errors='ignore')
-            elif isinstance(raw, str):
-                raw_text = raw
-            else:
-                raise TypeError(f"Unexpected return type from get_text_by_id: {type(raw)}")
-        except Exception as e:
-            raise RuntimeError(f"Gutenberg download/decode failed: {e}")
+        raw = get_text_by_id(book_id)
+        print(f"DEBUG: Type of raw: {type(raw)}")
+        if isinstance(raw, bytes):
+            print(f"DEBUG: Raw preview (bytes): {raw[:500]}")
+            raw_text = raw.decode('utf-8', errors='ignore')
+        elif isinstance(raw, str):
+            print(f"DEBUG: Raw preview (str): {raw[:500]}")
+            raw_text = raw
+        else:
+            raise TypeError(f"Unexpected return type from get_text_by_id: {type(raw)}")
 
+        # Safety check
         if not raw_text or len(raw_text.strip()) < 1000:
             raise ValueError("Text too short or empty after decoding.")
 
