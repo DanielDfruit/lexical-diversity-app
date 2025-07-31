@@ -3,3 +3,5 @@ uvicorn
 nltk
 gutenbergpy
 scikit-learn
+math
+collections
