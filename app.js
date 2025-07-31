@@ -111,23 +111,21 @@ function clearMetadata(role) {
 
 
 async function fetchTTR() {
-  const bookIdEl = document.getElementById('bookId');
-  if (!bookIdEl || !bookIdEl.value) {
-    alert("Please select or enter a book ID.");
-    return;
-  }
-
-  const bookId = bookIdEl.value;
+  const bookId = document.getElementById('bookId').value;
+  const compareId = document.getElementById('compareId').value;
   const mode = document.getElementById('mode').value;
   const windowSize = document.getElementById('windowSize').value;
   const step = document.getElementById('step').value;
 
-  const url = new URL(`https://lexical-diversity-app.onrender.com/ttr`);
-  url.searchParams.set("book_id", bookId);
-  url.searchParams.set("mode", mode);
+  if (!bookId && !compareId) {
+    alert("Please select at least one book.");
+    return;
+  }
+
+  const params = new URLSearchParams({ mode });
   if (mode === "rolling") {
-    url.searchParams.set("window_size", windowSize);
-    url.searchParams.set("step", step);
+    params.set("window_size", windowSize);
+    params.set("step", step);
   }
 
   const svg = d3.select("#ttrPlot");
@@ -138,120 +136,147 @@ async function fetchTTR() {
   analyzeBtn.disabled = true;
   loading.style.display = "inline";
 
-  try {
-    const response = await fetch(url);
-    const data = await response.json();
+  const fetchSingle = async (id) => {
+    const url = new URL(`https://lexical-diversity-app.onrender.com/ttr`);
+    url.searchParams.set("book_id", id);
+    params.forEach((val, key) => url.searchParams.set(key, val));
 
-    const ttrData = data.ttr_curve;
-    if (!Array.isArray(ttrData)) throw new Error("Malformed or missing TTR data");
+    const res = await fetch(url);
+    if (!res.ok) throw new Error(`Failed to fetch TTR for book ID ${id}`);
+    const json = await res.json();
+    return { id, data: json.ttr_curve };
+  };
+
+  try {
+    const fetches = [bookId, compareId].filter(Boolean).map(fetchSingle);
+    const results = await Promise.all(fetches);
 
     const margin = { top: 50, right: 30, bottom: 50, left: 60 },
-      width = +svg.attr("width") - margin.left - margin.right,
-      height = +svg.attr("height") - margin.top - margin.bottom;
+          width = +svg.attr("width") - margin.left - margin.right,
+          height = +svg.attr("height") - margin.top - margin.bottom;
 
-const g = svg.append("g").attr("transform", `translate(${margin.left},${margin.top})`);
+    const g = svg.append("g").attr("transform", `translate(${margin.left},${margin.top})`);
 
-const x = d3.scaleLinear()
-    .domain(d3.extent(ttrData, d => d.position))
-    .range([0, width]);
+    const allData = results.flatMap(r => r.data);
+    const x = d3.scaleLinear()
+      .domain(d3.extent(allData, d => d.position))
+      .range([0, width]);
 
-const y = d3.scaleLinear()
-    .domain([0, 1])
-    .range([height, 0]);
+    const y = d3.scaleLinear()
+      .domain([0, 1])
+      .range([height, 0]);
 
-// Gridlines
-g.append("g")
-  .attr("class", "grid")
-  .call(d3.axisLeft(y).ticks(10).tickSize(-width).tickFormat(""));
+    // Gridlines
+    g.append("g")
+      .attr("class", "grid")
+      .call(d3.axisLeft(y).ticks(10).tickSize(-width).tickFormat(""));
 
-// X Axis
-g.append("g")
-  .attr("transform", `translate(0,${height})`)
-  .call(d3.axisBottom(x).ticks(10).tickFormat(d3.format(",")))
-  .append("text")
-  .attr("x", width / 2)
-  .attr("y", 40)
-  .attr("fill", "#000")
-  .attr("text-anchor", "middle")
-  .text("Word Position");
+    // X Axis
+    g.append("g")
+      .attr("transform", `translate(0,${height})`)
+      .call(d3.axisBottom(x).ticks(10).tickFormat(d3.format(",")))
+      .append("text")
+      .attr("x", width / 2)
+      .attr("y", 40)
+      .attr("fill", "#000")
+      .attr("text-anchor", "middle")
+      .text("Word Position");
 
-// Y Axis
-g.append("g")
-  .call(d3.axisLeft(y).ticks(10))
-  .append("text")
-  .attr("transform", "rotate(-90)")
-  .attr("x", -height / 2)
-  .attr("y", -45)
-  .attr("fill", "#000")
-  .attr("text-anchor", "middle")
-  .text("Token Type Ratio (TTR)");
+    // Y Axis
+    g.append("g")
+      .call(d3.axisLeft(y).ticks(10))
+      .append("text")
+      .attr("transform", "rotate(-90)")
+      .attr("x", -height / 2)
+      .attr("y", -45)
+      .attr("fill", "#000")
+      .attr("text-anchor", "middle")
+      .text("Token Type Ratio (TTR)");
 
-// Title
-svg.append("text")
-  .attr("x", (width + margin.left + margin.right) / 2)
-  .attr("y", 20)
-  .attr("text-anchor", "middle")
-  .style("font-size", "18px")
-  .style("font-weight", "bold")
-  .text("Lexical Diversity (TTR)");
+    // Title
+    svg.append("text")
+      .attr("x", (width + margin.left + margin.right) / 2)
+      .attr("y", 20)
+      .attr("text-anchor", "middle")
+      .style("font-size", "18px")
+      .style("font-weight", "bold")
+      .text("Lexical Diversity (TTR)");
 
-// Smooth Line
-const line = d3.line()
-  .curve(d3.curveMonotoneX)
-  .x(d => x(d.position))
-  .y(d => y(d.ttr));
+    const line = d3.line()
+      .curve(d3.curveMonotoneX)
+      .x(d => x(d.position))
+      .y(d => y(d.ttr));
 
-g.append("path")
-  .datum(ttrData)
-  .attr("fill", "none")
-  .attr("stroke", "steelblue")
-  .attr("stroke-width", 2)
-  .attr("d", line);
+    const colors = ["steelblue", "crimson"];
+    const tooltip = d3.select("body").append("div")
+      .attr("class", "tooltip")
+      .style("position", "absolute")
+      .style("background", "rgba(255,255,255,0.9)")
+      .style("padding", "6px 10px")
+      .style("border", "1px solid #ccc")
+      .style("border-radius", "4px")
+      .style("pointer-events", "none")
+      .style("display", "none");
 
-// Tooltip container
-const tooltip = d3.select("body").append("div")
-  .attr("class", "tooltip")
-  .style("position", "absolute")
-  .style("background", "rgba(255,255,255,0.9)")
-  .style("padding", "6px 10px")
-  .style("border", "1px solid #ccc")
-  .style("border-radius", "4px")
-  .style("pointer-events", "none")
-  .style("display", "none");
+    results.forEach((result, idx) => {
+      const color = colors[idx % colors.length];
+      const sampled = result.data.filter((_, i) => i % Math.ceil(result.data.length / 100) === 0);
 
-// Highlight Points (sampled)
-g.selectAll("circle")
-  .data(ttrData.filter((_, i) => i % Math.ceil(ttrData.length / 100) === 0))
-  .enter()
-  .append("circle")
-  .attr("cx", d => x(d.position))
-  .attr("cy", d => y(d.ttr))
-  .attr("r", 3)
-  .attr("fill", "orange")
-  .on("mouseover", (event, d) => {
-    tooltip.style("display", "block")
-      .html(`Word #${d3.format(",")(d.position)}<br>TTR: ${d.ttr.toFixed(3)}`)
-      .style("left", `${event.pageX + 10}px`)
-      .style("top", `${event.pageY - 28}px`);
-  })
-  .on("mouseout", () => tooltip.style("display", "none"));
+      // Line
+      g.append("path")
+        .datum(result.data)
+        .attr("fill", "none")
+        .attr("stroke", color)
+        .attr("stroke-width", 2)
+        .attr("d", line);
 
+      // Points
+      g.selectAll(`circle.book-${idx}`)
+        .data(sampled)
+        .enter()
+        .append("circle")
+        .attr("class", `book-${idx}`)
+        .attr("cx", d => x(d.position))
+        .attr("cy", d => y(d.ttr))
+        .attr("r", 3)
+        .attr("fill", color)
+        .on("mouseover", (event, d) => {
+          tooltip.style("display", "block")
+            .html(`Book ID: ${result.id}<br>Word #${d3.format(",")(d.position)}<br>TTR: ${d.ttr.toFixed(3)}`)
+            .style("left", `${event.pageX + 10}px`)
+            .style("top", `${event.pageY - 28}px`);
+        })
+        .on("mouseout", () => tooltip.style("display", "none"));
+    });
+
+    // Legend
+    const legend = svg.append("g")
+      .attr("transform", `translate(${width - 100},${margin.top})`);
     
-    g.append("path")
-      .datum(ttrData)
-      .attr("fill", "none")
-      .attr("stroke", "steelblue")
-      .attr("stroke-width", 1.5)
-      .attr("d", d3.line()
-          .x(d => x(d.position))
-          .y(d => y(d.ttr))
-      );
+    results.forEach((result, idx) => {
+      const color = colors[idx % colors.length];
+      const label = idx === 0 ? "Primary Book" : "Comparison Book";
+
+      legend.append("circle")
+        .attr("cx", 0)
+        .attr("cy", idx * 20)
+        .attr("r", 5)
+        .style("fill", color);
+
+      legend.append("text")
+        .attr("x", 10)
+        .attr("y", idx * 20 + 4)
+        .text(label)
+        .style("font-size", "12px")
+        .attr("alignment-baseline", "middle");
+    });
 
   } catch (err) {
-    console.error("Error fetching or drawing TTR:", err);
+    console.error("Error fetching or displaying TTR:", err);
     alert("Failed to fetch or display data.");
   } finally {
     analyzeBtn.disabled = false;
     loading.style.display = "none";
   }
 }
+
