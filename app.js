@@ -53,21 +53,62 @@ function searchBooks() {
     li.textContent = `${book.title} by ${book.author} (ID: ${book.id})`;
     li.style.cursor = "pointer";
     li.onclick = () => {
-      document.getElementById("bookId").value = book.id;
-      displayMetadata(book);
+      const bookIdInput = document.getElementById("bookId");
+      const compareIdInput = document.getElementById("compareId");
+
+      const alreadyUsed = [bookIdInput.value, compareIdInput.value].includes(book.id);
+
+      if (!bookIdInput.value || (alreadyUsed && compareIdInput.value)) {
+        bookIdInput.value = book.id;
+        displayMetadata(book, "primary");
+      } else if (!compareIdInput.value) {
+        compareIdInput.value = book.id;
+        displayMetadata(book, "compare");
+      } else {
+        // Replace primary if both are filled
+        bookIdInput.value = book.id;
+        displayMetadata(book, "primary");
+        compareIdInput.value = "";
+        clearMetadata("compare");
+      }
     };
     resultsList.appendChild(li);
   });
 }
 
-function displayMetadata(book) {
-  const meta = document.getElementById("bookMeta");
-  meta.innerHTML = `
+function displayMetadata(book, role) {
+  const container = document.getElementById("bookMeta");
+  const sectionId = role === "primary" ? "metaPrimary" : "metaCompare";
+  let section = document.getElementById(sectionId);
+
+  if (!section) {
+    section = document.createElement("div");
+    section.id = sectionId;
+    container.appendChild(section);
+  }
+
+  section.innerHTML = `
+    <h3>${role === "primary" ? "Primary Book" : "Comparison Book"}</h3>
     <p><strong>Title:</strong> ${book.title}</p>
     <p><strong>Author:</strong> ${book.author || "Unknown"}</p>
     <p><strong>Book ID:</strong> ${book.id}</p>
   `;
 }
+
+function clearMetadata(role) {
+  const id = role === "primary" ? "metaPrimary" : "metaCompare";
+  const el = document.getElementById(id);
+  if (el) el.remove();
+}
+
+  section.innerHTML = `
+    <h3>${role === "primary" ? "Primary Book" : "Comparison Book"}</h3>
+    <p><strong>Title:</strong> ${book.title}</p>
+    <p><strong>Author:</strong> ${book.author || "Unknown"}</p>
+    <p><strong>Book ID:</strong> ${book.id}</p>
+  `;
+}
+
 
 async function fetchTTR() {
   const bookIdEl = document.getElementById('bookId');
