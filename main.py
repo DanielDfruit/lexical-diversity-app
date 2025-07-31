@@ -1,10 +1,13 @@
-from gutenbergpy.textget import get_text_by_id
-from utils import compute_ttr_series_cumulative, compute_ttr_series_rolling, clean_text
 import nltk
 nltk.download('punkt')
 
-from fastapi import FastAPI, Query
+from fastapi import FastAPI, Query, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+import traceback
+
+from gutenbergpy.textget import get_text_by_id
+from gutenbergpy.gutenbergcache import GutenbergCache
+from utils import compute_ttr_series_cumulative, compute_ttr_series_rolling, clean_text
 
 app = FastAPI()
 
