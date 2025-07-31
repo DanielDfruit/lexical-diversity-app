@@ -1,6 +1,8 @@
 from gutenbergpy.textget import get_text_by_id
 from nltk.tokenize import word_tokenize
 import re
+import nltk
+nltk.download("punkt")
 
 from gutenbergpy import gutenbergcache
 
