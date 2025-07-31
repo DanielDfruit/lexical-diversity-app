@@ -102,16 +102,6 @@ function clearMetadata(role) {
 }
 
 
-
-  section.innerHTML = `
-    <h3>${role === "primary" ? "Primary Book" : "Comparison Book"}</h3>
-    <p><strong>Title:</strong> ${book.title}</p>
-    <p><strong>Author:</strong> ${book.author || "Unknown"}</p>
-    <p><strong>Book ID:</strong> ${book.id}</p>
-  `;
-}
-
-
 async function fetchTTR() {
   const bookId = document.getElementById('bookId').value;
   const compareId = document.getElementById('compareId').value;
