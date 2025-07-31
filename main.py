@@ -13,6 +13,22 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+from gutenbergpy.gutenbergcache import GutenbergCache
+
+cache = GutenbergCache.get_cache()
+
+@app.get("/search")
+def search_books(query: str):
+    query_lower = query.lower()
+    matches = [
+        {"id": book["id"], "title": book["title"]}
+        for book in cache.records
+        if query_lower in book["title"].lower()
+    ]
+    return {"results": matches[:25]}  # limit for usability
+
+
+
 @app.get("/")
 def root():
     return {"message": "Lexical Diversity API is running"}
