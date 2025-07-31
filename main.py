@@ -46,7 +46,8 @@ def get_ttr(
     mode: str = Query("cumulative", regex="^(cumulative|rolling)$"),
     window_size: int = Query(200, ge=10, le=1000),
     step: int = Query(50, ge=1, le=1000),
-    exclude_stopwords: bool = Query(False)
+    exclude_stopwords: bool = Query(False),
+    metric: str = Query("ttr", regex="^(ttr|rttr|cttr)$")
 ):
     try:
         raw = get_text_by_id(book_id)
@@ -60,24 +61,29 @@ def get_ttr(
         else:
             raise TypeError(f"Unexpected return type from get_text_by_id: {type(raw)}")
 
-        # Safety check
         if not raw_text or len(raw_text.strip()) < 1000:
             raise ValueError("Text too short or empty after decoding.")
 
-        # Pass stopword toggle to cleaner
         text = clean_text(raw_text, exclude_stopwords=exclude_stopwords)
 
-        if not text or len(text) < 100:
+        if not text or len(text.split()) < 100:
             raise ValueError("Text too short after cleaning.")
 
         if mode == "cumulative":
-            ttr_series = compute_ttr_series_cumulative(text)
+            if metric == "ttr":
+                ttr_series = compute_ttr_series_cumulative(text)
+            elif metric == "rttr":
+                ttr_series = compute_rttr_series_cumulative(text)
+            elif metric == "cttr":
+                ttr_series = compute_cttr_series_cumulative(text)
         else:
+            # Rolling mode always uses standard TTR for now
             ttr_series = compute_ttr_series_rolling(text, window_size=window_size, step=step)
 
         return {
             "book_id": book_id,
             "mode": mode,
+            "metric": metric,
             "exclude_stopwords": exclude_stopwords,
             "length": len(ttr_series),
             "window_size": window_size if mode == "rolling" else None,
