@@ -1,12 +1,3 @@
-import nltk
-import os
-
-# Manually set download dir (helps with Render compatibility)
-nltk_data_dir = os.path.join(os.getcwd(), 'nltk_data')
-nltk.download('punkt', download_dir=nltk_data_dir)
-
-# Make sure nltk uses this dir when loading
-nltk.data.path.append(nltk_data_dir)
 from fastapi import FastAPI, Query, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 import traceback
@@ -26,9 +17,6 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-
-from gutenbergpy.gutenbergcache import GutenbergCache
-
 cache = GutenbergCache.get_cache()
 
 @app.get("/search")
@@ -47,22 +35,19 @@ def search_books(query: str):
     return {"results": matches[:25]}  # limit to 25 results
 
 
-
 @app.get("/")
 def root():
     return {"message": "Lexical Diversity API is running"}
 
-from fastapi import HTTPException
-import traceback
 
 @app.get("/ttr")
 def get_ttr(
     book_id: int = Query(...),
     mode: str = Query("cumulative", regex="^(cumulative|rolling)$"),
     window_size: int = Query(200, ge=10, le=1000),
-    step: int = Query(50, ge=1, le=1000)
+    step: int = Query(50, ge=1, le=1000),
+    exclude_stopwords: bool = Query(False)
 ):
-    import traceback
     try:
         raw = get_text_by_id(book_id)
         print(f"DEBUG: Type of raw: {type(raw)}")
@@ -79,9 +64,10 @@ def get_ttr(
         if not raw_text or len(raw_text.strip()) < 1000:
             raise ValueError("Text too short or empty after decoding.")
 
-        text = clean_text(raw_text)
+        # Pass stopword toggle to cleaner
+        text = clean_text(raw_text, exclude_stopwords=exclude_stopwords)
 
-        if not text or len(text.split()) < 100:
+        if not text or len(text) < 100:
             raise ValueError("Text too short after cleaning.")
 
         if mode == "cumulative":
@@ -92,6 +78,7 @@ def get_ttr(
         return {
             "book_id": book_id,
             "mode": mode,
+            "exclude_stopwords": exclude_stopwords,
             "length": len(ttr_series),
             "window_size": window_size if mode == "rolling" else None,
             "step": step if mode == "rolling" else None,
