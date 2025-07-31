@@ -46,6 +46,9 @@ def search_books(query: str):
 def root():
     return {"message": "Lexical Diversity API is running"}
 
+from fastapi import HTTPException
+import traceback
+
 @app.get("/ttr")
 def get_ttr(
     book_id: int = Query(...),
@@ -54,10 +57,19 @@ def get_ttr(
     step: int = Query(50, ge=1, le=1000)
 ):
     try:
-        raw_bytes = get_text_by_id(book_id)
-        raw_text = raw_bytes.decode('utf-8', errors='ignore')  # Decode the binary content
+        try:
+            raw_bytes = get_text_by_id(book_id)
+            raw_text = raw_bytes.decode('utf-8', errors='ignore')
+        except Exception as e:
+            raise RuntimeError(f"Gutenberg download/decode failed: {e}")
+
+        if not raw_text or len(raw_text.strip()) < 1000:
+            raise ValueError("Text too short or empty after decoding.")
+
         text = clean_text(raw_text)
 
+        if not text or len(text.split()) < 100:
+            raise ValueError("Text too short after cleaning.")
 
         if mode == "cumulative":
             ttr_series = compute_ttr_series_cumulative(text)
@@ -72,6 +84,7 @@ def get_ttr(
             "step": step if mode == "rolling" else None,
             "ttr_curve": ttr_series
         }
+
     except Exception as e:
         print("Full exception:\n", traceback.format_exc())
-        return {"error": str(e)}
+        return {"error": f"Could not process book {book_id}. Reason: {str(e)}"}
