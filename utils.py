@@ -1,11 +1,12 @@
 from gutenbergpy.textget import get_text_by_id
-from nltk.tokenize import word_tokenize
-import re
-import nltk
-nltk.download("punkt")
-
 from gutenbergpy import gutenbergcache
+import re
 
+# --- Simple tokenizer using regex ---
+def tokenize_text(text: str):
+    return re.findall(r"\b\w+\b", text.lower())
+
+# --- Book search ---
 def search_books(query, max_results=10):
     cache = gutenbergcache.GutenbergCache.get_cache()
     metadata = cache.df
@@ -22,8 +23,8 @@ def search_books(query, max_results=10):
         for _, row in matches.iterrows()
     ]
 
+# --- Strip boilerplate ---
 def clean_text(text: str):
-    # Already decoded at this point
     text = re.sub(r'\r\n', ' ', text)
     start = text.find("*** START OF")
     end = text.find("*** END OF")
@@ -31,9 +32,9 @@ def clean_text(text: str):
         text = text[start:end]
     return text.strip()
 
-
+# --- Cumulative TTR ---
 def compute_ttr_series_cumulative(text):
-    words = word_tokenize(text.lower())
+    words = tokenize_text(text)
     seen = set()
     ttr_list = []
     for i, word in enumerate(words):
@@ -42,11 +43,13 @@ def compute_ttr_series_cumulative(text):
         ttr_list.append({"position": i + 1, "ttr": ttr})
     return ttr_list
 
+# --- Rolling window TTR ---
 def compute_ttr_series_rolling(text, window_size=200, step=50):
-    words = word_tokenize(text.lower())
+    words = tokenize_text(text)
     ttr_list = []
     for i in range(0, len(words) - window_size + 1, step):
         window = words[i:i + window_size]
         ttr = len(set(window)) / len(window)
         ttr_list.append({"position": i, "ttr": ttr})
     return ttr_list
+
