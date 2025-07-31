@@ -10,10 +10,43 @@ async function loadBookList() {
   }
 }
 
-async function fetchTTR() {
-  const bookId = document.getElementById('bookId').value;
-  const url = `https://lexical-diversity-app.onrender.com/ttr?book_id=${bookId}`;
+function searchBooks() {
+  const query = document.getElementById('searchBox').value.trim().toLowerCase();
+  const dropdown = document.getElementById("resultsDropdown");
+  const buildButton = document.getElementById("buildGraphBtn");
 
+  if (!query || query.length < 3) return;
+
+  const matches = allBooks.filter(book =>
+    book.title.toLowerCase().includes(query) ||
+    (book.author && book.author.toLowerCase().includes(query))
+  );
+
+  dropdown.innerHTML = "";
+  matches.slice(0, 25).forEach(book => {
+    const option = document.createElement("option");
+    option.value = book.id;
+    option.textContent = `${book.title} by ${book.author} (ID: ${book.id})`;
+    dropdown.appendChild(option);
+  });
+
+  if (matches.length > 0) {
+    dropdown.style.display = "inline-block";
+    buildButton.style.display = "inline-block";
+  } else {
+    dropdown.style.display = "none";
+    buildButton.style.display = "none";
+  }
+}
+
+async function fetchTTR(bookId = null) {
+  if (!bookId) {
+    bookId = document.getElementById('resultsDropdown').value || document.getElementById('bookId').value;
+  }
+
+  if (!bookId) return;
+
+  const url = `https://lexical-diversity-app.onrender.com/ttr?book_id=${bookId}`;
   const svg = d3.select("#ttrPlot");
   svg.selectAll("*").remove();
 
@@ -21,12 +54,11 @@ async function fetchTTR() {
     const response = await fetch(url);
     const data = await response.json();
 
-    console.log(data);  // Inspect backend response
-
-    const ttrData = data.ttr_curve;
-    if (!Array.isArray(ttrData)) {
+    if (!Array.isArray(data.ttr_curve)) {
       throw new Error("Malformed or missing TTR data");
     }
+
+    const ttrData = data.ttr_curve;
 
     const margin = { top: 20, right: 30, bottom: 30, left: 50 },
           width = +svg.attr("width") - margin.left - margin.right,
@@ -63,32 +95,15 @@ async function fetchTTR() {
   }
 }
 
-function searchBooks() {
-  const query = document.getElementById('searchBox').value.trim().toLowerCase();
-  if (!query || query.length < 3) return;
-
-  const matches = allBooks.filter(book =>
-    book.title.toLowerCase().includes(query) ||
-    (book.author && book.author.toLowerCase().includes(query))
-  );
-
-  const resultsList = document.getElementById('resultsList');
-  resultsList.innerHTML = "";
-
-  matches.slice(0, 25).forEach(book => {
-    const li = document.createElement("li");
-    li.textContent = `${book.title} by ${book.author} (ID: ${book.id})`;
-    li.style.cursor = "pointer";
-    li.onclick = () => {
-      document.getElementById("bookId").value = book.id;
-      fetchTTR();
-    };
-    resultsList.appendChild(li);
-  });
-}
-
 document.addEventListener("DOMContentLoaded", () => {
-  loadBookList(); // 🔼 fetch books.json on startup
+  loadBookList();
+
+  document.getElementById("searchBtn").addEventListener("click", searchBooks);
+
+  document.getElementById("buildGraphBtn").addEventListener("click", () => {
+    const bookId = document.getElementById("resultsDropdown").value;
+    fetchTTR(bookId);
+  });
 
   const searchBox = document.getElementById("searchBox");
   if (searchBox) {
