@@ -104,46 +104,97 @@ async function fetchTTR() {
     const ttrData = data.ttr_curve;
     if (!Array.isArray(ttrData)) throw new Error("Malformed or missing TTR data");
 
-    const margin = { top: 20, right: 30, bottom: 30, left: 50 },
-          width = +svg.attr("width") - margin.left - margin.right,
-          height = +svg.attr("height") - margin.top - margin.bottom;
+    const margin = { top: 50, right: 30, bottom: 50, left: 60 },
+      width = +svg.attr("width") - margin.left - margin.right,
+      height = +svg.attr("height") - margin.top - margin.bottom;
 
-    const g = svg.append("g").attr("transform", `translate(${margin.left},${margin.top})`);
+const g = svg.append("g").attr("transform", `translate(${margin.left},${margin.top})`);
 
-    const x = d3.scaleLinear()
-        .domain(d3.extent(ttrData, d => d.position))
-        .range([0, width]);
+const x = d3.scaleLinear()
+    .domain(d3.extent(ttrData, d => d.position))
+    .range([0, width]);
 
-    const y = d3.scaleLinear()
-        .domain([0, 1])
-        .range([height, 0]);
+const y = d3.scaleLinear()
+    .domain([0, 1])
+    .range([height, 0]);
 
-    g.append("g")
-      .attr("transform", `translate(0,${height})`)
-      .call(d3.axisBottom(x));
+// Gridlines
+g.append("g")
+  .attr("class", "grid")
+  .call(d3.axisLeft(y).ticks(10).tickSize(-width).tickFormat(""));
 
-    g.append("g")
-      .call(d3.axisLeft(y));
+// X Axis
+g.append("g")
+  .attr("transform", `translate(0,${height})`)
+  .call(d3.axisBottom(x).ticks(10).tickFormat(d3.format(",")))
+  .append("text")
+  .attr("x", width / 2)
+  .attr("y", 40)
+  .attr("fill", "#000")
+  .attr("text-anchor", "middle")
+  .text("Word Position");
 
-    const tooltip = d3.select("body").append("div")
-      .attr("class", "tooltip")
-      .style("opacity", 0);
+// Y Axis
+g.append("g")
+  .call(d3.axisLeft(y).ticks(10))
+  .append("text")
+  .attr("transform", "rotate(-90)")
+  .attr("x", -height / 2)
+  .attr("y", -45)
+  .attr("fill", "#000")
+  .attr("text-anchor", "middle")
+  .text("Token Type Ratio (TTR)");
 
-    g.selectAll("circle")
-      .data(ttrData.filter((_, i) => i % Math.ceil(ttrData.length / 100) === 0)) // sample for performance
-      .enter()
-      .append("circle")
-      .attr("cx", d => x(d.position))
-      .attr("cy", d => y(d.ttr))
-      .attr("r", 3)
-      .attr("fill", "darkorange")
-      .on("mouseover", function(event, d) {
-        tooltip.transition().duration(200).style("opacity", .9);
-        tooltip.html(`Word #${d.position}<br>TTR: ${d.ttr.toFixed(3)}`)
-          .style("left", `${event.pageX + 15}px`)
-          .style("top", `${event.pageY - 20}px`);
-      })
-      .on("mouseout", () => tooltip.transition().duration(500).style("opacity", 0));
+// Title
+svg.append("text")
+  .attr("x", (width + margin.left + margin.right) / 2)
+  .attr("y", 20)
+  .attr("text-anchor", "middle")
+  .style("font-size", "18px")
+  .style("font-weight", "bold")
+  .text("Lexical Diversity (TTR)");
+
+// Smooth Line
+const line = d3.line()
+  .curve(d3.curveMonotoneX)
+  .x(d => x(d.position))
+  .y(d => y(d.ttr));
+
+g.append("path")
+  .datum(ttrData)
+  .attr("fill", "none")
+  .attr("stroke", "steelblue")
+  .attr("stroke-width", 2)
+  .attr("d", line);
+
+// Tooltip container
+const tooltip = d3.select("body").append("div")
+  .attr("class", "tooltip")
+  .style("position", "absolute")
+  .style("background", "rgba(255,255,255,0.9)")
+  .style("padding", "6px 10px")
+  .style("border", "1px solid #ccc")
+  .style("border-radius", "4px")
+  .style("pointer-events", "none")
+  .style("display", "none");
+
+// Highlight Points (sampled)
+g.selectAll("circle")
+  .data(ttrData.filter((_, i) => i % Math.ceil(ttrData.length / 100) === 0))
+  .enter()
+  .append("circle")
+  .attr("cx", d => x(d.position))
+  .attr("cy", d => y(d.ttr))
+  .attr("r", 3)
+  .attr("fill", "orange")
+  .on("mouseover", (event, d) => {
+    tooltip.style("display", "block")
+      .html(`Word #${d3.format(",")(d.position)}<br>TTR: ${d.ttr.toFixed(3)}`)
+      .style("left", `${event.pageX + 10}px`)
+      .style("top", `${event.pageY - 28}px`);
+  })
+  .on("mouseout", () => tooltip.style("display", "none"));
+
     
     g.append("path")
       .datum(ttrData)
