@@ -47,7 +47,7 @@ def get_ttr(
     window_size: int = Query(200, ge=10, le=1000),
     step: int = Query(50, ge=1, le=1000),
     exclude_stopwords: bool = Query(False),
-    metric: str = Query("ttr", regex="^(ttr|rttr|cttr)$")
+    metric: str = Query("ttr", regex="^(ttr|rttr|cttr|mtld|hdd)$")
 ):
     try:
         raw = get_text_by_id(book_id)
@@ -76,6 +76,11 @@ def get_ttr(
                 ttr_series = compute_rttr_series_cumulative(text)
             elif metric == "cttr":
                 ttr_series = compute_cttr_series_cumulative(text)
+            elif metric == "mtld":
+                ttr_series = compute_mtld_cumulative(text)
+            elif metric == "hdd":
+                ttr_series = compute_hdd_cumulative(text)
+
         else:
             # Rolling mode always uses standard TTR for now
             ttr_series = compute_ttr_series_rolling(text, window_size=window_size, step=step)
