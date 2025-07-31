@@ -21,11 +21,16 @@ cache = GutenbergCache.get_cache()
 def search_books(query: str):
     query_lower = query.lower()
     matches = [
-        {"id": book["id"], "title": book["title"]}
+        {
+            "id": book["id"],
+            "title": book.get("title", "Unknown Title"),
+            "author": book.get("author", "Unknown Author")
+        }
         for book in cache.records
-        if query_lower in book["title"].lower()
+        if query_lower in book.get("title", "").lower()
+        or query_lower in book.get("author", "").lower()
     ]
-    return {"results": matches[:25]}  # limit for usability
+    return {"results": matches[:25]}  # limit to 25 results
 
 
 
