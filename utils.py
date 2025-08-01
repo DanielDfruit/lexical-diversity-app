@@ -86,46 +86,52 @@ def compute_mtld_cumulative(tokens, ttr_threshold=0.72, min_segment_length=10):
     token_count = 0
     types = set()
     mtld_series = []
-    i = 0
 
-    for word in tokens:
+    for i, word in enumerate(tokens):
         token_count += 1
         types.add(word)
         ttr = len(types) / token_count
 
         if ttr <= ttr_threshold and token_count >= min_segment_length:
             factors += 1
-            mtld_series.append({"position": i + 1, "ttr": len(tokens) / (factors if factors > 0 else 1)})
             token_count = 0
             types.clear()
 
-        i += 1
+        current_factors = factors + (1 if token_count > 0 else 0)
+        mtld_value = len(tokens) / current_factors if current_factors > 0 else 0
+        mtld_series.append({"position": i + 1, "ttr": mtld_value})
 
-    if token_count > 0:
-        excess = len(types) / ttr_threshold
-        factors += 1 if excess else 0
+    return mtld_series
 
-    if factors == 0:
-        return [{"position": len(tokens), "ttr": 0}]
-
-    return [{"position": len(tokens), "ttr": len(tokens) / factors}]
+    
 
 
 import math
 from collections import Counter
 
-def compute_hdd_cumulative(tokens, sample_size=42):
-    freqs = Counter(tokens)
-    N = len(tokens)
-    hdd_value = 0.0
+def compute_hdd_cumulative(tokens, sample_size=42, step=50):
+    from collections import Counter
+    import math
 
-    for word, freq in freqs.items():
-        if freq == 0 or N == 0 or sample_size > N:
-            continue
-        try:
-            prob_zero = math.comb(N - freq, sample_size) / math.comb(N, sample_size)
-            hdd_value += (1 - prob_zero)
-        except ValueError:
-            continue
+    def compute_hdd(subtokens):
+        freqs = Counter(subtokens)
+        N = len(subtokens)
+        hdd = 0.0
+        for word, freq in freqs.items():
+            if freq == 0 or N == 0 or sample_size > N:
+                continue
+            try:
+                prob_zero = math.comb(N - freq, sample_size) / math.comb(N, sample_size)
+                hdd += (1 - prob_zero)
+            except ValueError:
+                continue
+        return hdd
 
-    return [{"position": len(tokens), "ttr": hdd_value}]
+    hdd_series = []
+    for i in range(step, len(tokens) + 1, step):
+        subtokens = tokens[:i]
+        hdd_value = compute_hdd(subtokens)
+        hdd_series.append({"position": i, "ttr": hdd_value})
+
+    return hdd_series
+
