@@ -95,6 +95,8 @@ function clearMetadata(role) {
   if (el) el.remove();
 }
 
+let chart; // Global scope
+
 async function fetchTTR() {
   const bookId = document.getElementById('bookId').value;
   const compareId = document.getElementById('compareId').value;
@@ -137,64 +139,64 @@ async function fetchTTR() {
     const datasets = results.map((result, idx) => ({
       label: idx === 0 ? "Primary Book" : "Comparison Book",
       data: result.data.map(d => ({ x: d.position, y: d.ttr })),
-      borderColor: idx === 0 ? "steelblue" : "crimson",
-      fill: false,
+      borderColor: idx === 0 ? "rgba(70, 130, 180, 0.4)" : "rgba(220, 20, 60, 0.4)",
+      backgroundColor: idx === 0 ? "rgba(70, 130, 180, 0.1)" : "rgba(220, 20, 60, 0.1)",
+      pointRadius: 0,
       tension: 0.3,
-      pointRadius: 0
+      fill: false
     }));
 
     const ctx = document.getElementById("chart").getContext("2d");
 
-    if (chart) chart.destroy(); // Remove old chart
+    if (chart) chart.destroy();
 
     chart = new Chart(ctx, {
       type: "line",
-      data: { datasets },
+      data: {
+        datasets: datasets
+      },
       options: {
         responsive: true,
-        plugins: {
-          legend: { position: "top" },
-          tooltip: {
-            callbacks: {
-              label: (context) => `TTR: ${context.parsed.y.toFixed(3)} @ ${context.parsed.x}`
-            }
-          },
-          zoom: {
-            zoom: { wheel: { enabled: true }, pinch: { enabled: true }, mode: "xy" },
-            pan: { enabled: true, mode: "xy" }
-          }
+        interaction: {
+          mode: 'nearest',
+          axis: 'x',
+          intersect: false
         },
         scales: {
           x: {
-            type: "linear",
-            title: { display: true, text: "Word Position" }
+            type: 'linear',
+            title: { display: true, text: 'Word Position' }
           },
           y: {
             min: 0,
             max: 1,
-            title: { display: true, text: "Token Type Ratio (TTR)" }
+            title: { display: true, text: 'TTR' }
           }
+        },
+        plugins: {
+          zoom: {
+            zoom: {
+              wheel: { enabled: true },
+              pinch: { enabled: true },
+              mode: 'x'
+            },
+            pan: {
+              enabled: true,
+              mode: 'x',
+              modifierKey: 'ctrl'
+            }
+          },
+          legend: { display: true },
+          tooltip: { enabled: true }
         }
       }
     });
+
   } catch (err) {
-    console.error("Error fetching or displaying TTR:", err);
-    alert("Failed to fetch or display data.");
+    alert(err.message);
   } finally {
     analyzeBtn.disabled = false;
     loading.style.display = "none";
   }
 }
 
-function toggleZoom() {
-  if (!chart) return;
-  const plugin = chart.options.plugins.zoom;
-  const enabled = plugin.zoom.wheel.enabled;
-  plugin.zoom.wheel.enabled = plugin.zoom.pinch.enabled = plugin.pan.enabled = !enabled;
-  chart.update();
-  document.getElementById("zoom-toggle").textContent = enabled ? "Enable Zoom" : "Disable Zoom";
-}
-
-function resetZoom() {
-  if (chart) chart.resetZoom();
-}
