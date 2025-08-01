@@ -7,7 +7,7 @@ and Hypergeometric Distribution D (HDD). It also includes text processing utilit
 for tokenization, cleaning, and book search functionality.
 """  # ADDED: Module-level docstring
 
-# CHANGED: Consolidated all imports at the top
+
 from gutenbergpy.textget import get_text_by_id
 from gutenbergpy import gutenbergcache
 import re  # CHANGED: Removed duplicate import from line 27
@@ -29,7 +29,7 @@ def tokenize_text(text: str):
         
     Returns:
         list: List of lowercase words (tokens) found in the text
-    """  # ADDED: Function docstring
+    """  
     return re.findall(r"\b\w+\b", text.lower())
 
 
@@ -43,7 +43,7 @@ def search_books(query, max_results=10):
         
     Returns:
         list: List of dictionaries containing book id, title, and author
-    """  # ADDED: Function docstring
+    """  
     cache = gutenbergcache.GutenbergCache.get_cache()
     metadata = cache.df
     metadata = metadata.dropna(subset=["title"])
@@ -70,7 +70,7 @@ def clean_text(text: str, exclude_stopwords: bool = False):
         
     Returns:
         list: List of cleaned and tokenized words
-    """  # ADDED: Function docstring
+    """  
 
     text = re.sub(r'\r\n', ' ', text)
     start = text.find("*** START OF")
@@ -99,7 +99,7 @@ def compute_ttr_series_cumulative(tokens):
         
     Returns:
         list: List of dictionaries with 'position' and 'ttr' keys
-    """  # ADDED: Function docstring
+    """  
     seen = set()
     ttr_list = []
     for i, word in enumerate(tokens):
@@ -120,7 +120,7 @@ def compute_ttr_series_rolling(tokens, window_size=200, step=50):
         
     Returns:
         list: List of dictionaries with 'position' and 'ttr' keys
-    """  # ADDED: Function docstring
+    """  
     ttr_list = []
     for i in range(0, len(tokens) - window_size + 1, step):
         window = tokens[i:i + window_size]
@@ -140,7 +140,7 @@ def compute_rttr_series_cumulative(tokens):
         
     Returns:
         list: List of dictionaries with 'position' and 'ttr' keys
-    """  # ADDED: Function docstring
+    """  
     seen = set()
     rttr_list = []
     for i, word in enumerate(tokens):
@@ -162,7 +162,7 @@ def compute_cttr_series_cumulative(tokens):
         
     Returns:
         list: List of dictionaries with 'position' and 'ttr' keys
-    """  # ADDED: Function docstring
+    """ 
     seen = set()
     cttr_list = []
     for i, word in enumerate(tokens):
@@ -191,7 +191,7 @@ def compute_mtld_cumulative(tokens, ttr_threshold=0.72, min_segment_length=10):
         
     Returns:
         list: List of dictionaries with 'position' and 'ttr' keys (MTLD values)
-    """  # ADDED: Function docstring
+    """  
     factors = 0
     token_count = 0
     types = set()
@@ -226,7 +226,7 @@ def n_choose_k(n, k):
         
     Returns:
         int: Binomial coefficient value, 0 if k < 0 or k > n
-    """  # ADDED: Function docstring
+    """  
     if k < 0 or k > n:
         return 0
     return math.factorial(n) // (math.factorial(k) * math.factorial(n - k))
@@ -247,7 +247,7 @@ def compute_hdd_cumulative(tokens, sample_size=42, step=50):
         
     Returns:
         list: List of dictionaries with 'position' and 'ttr' keys (HDD values)
-    """  # ADDED: Function docstring
+    """  
     def compute_hdd(slice_tokens):
         freqs = Counter(slice_tokens)
         N = len(slice_tokens)
