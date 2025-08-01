@@ -109,28 +109,29 @@ def compute_mtld_cumulative(tokens, ttr_threshold=0.72, min_segment_length=10):
 import math
 from collections import Counter
 
-def compute_hdd_cumulative(tokens, sample_size=42, step=50):
-    from collections import Counter
-    import math
+def n_choose_k(n, k):
+    if k < 0 or k > n:
+        return 0
+    return math.factorial(n) // (math.factorial(k) * math.factorial(n - k))
 
-    def compute_hdd(subtokens):
-        freqs = Counter(subtokens)
-        N = len(subtokens)
+def compute_hdd_cumulative(tokens, sample_size=42, step=50):
+    def compute_hdd(slice_tokens):
+        freqs = Counter(slice_tokens)
+        N = len(slice_tokens)
         hdd = 0.0
         for word, freq in freqs.items():
             if freq == 0 or N == 0 or sample_size > N:
                 continue
             try:
-                prob_zero = math.comb(N - freq, sample_size) / math.comb(N, sample_size)
+                prob_zero = n_choose_k(N - freq, sample_size) / n_choose_k(N, sample_size)
                 hdd += (1 - prob_zero)
-            except ValueError:
+            except (ValueError, ZeroDivisionError, OverflowError):
                 continue
         return hdd
 
     hdd_series = []
     for i in range(step, len(tokens) + 1, step):
-        subtokens = tokens[:i]
-        hdd_value = compute_hdd(subtokens)
+        hdd_value = compute_hdd(tokens[:i])
         hdd_series.append({"position": i, "ttr": hdd_value})
 
     return hdd_series
