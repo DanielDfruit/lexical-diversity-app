@@ -146,7 +146,7 @@ def compute_rttr_series_cumulative(tokens):
     for i, word in enumerate(tokens):
         seen.add(word)
         length = i + 1
-        rttr = len(seen) / (length ** 0.5)
+        rttr = min(len(seen) / (length ** 0.5), 1.0)
         rttr_list.append({"position": length, "ttr": rttr})
     return rttr_list
 
@@ -168,7 +168,7 @@ def compute_cttr_series_cumulative(tokens):
     for i, word in enumerate(tokens):
         seen.add(word)
         length = i + 1
-        cttr = len(seen) / ((2 * length) ** 0.5)
+        cttr = min(len(seen) / ((2 * length) ** 0.5), 1.0)
         cttr_list.append({"position": length, "ttr": cttr})
     return cttr_list
 
@@ -248,19 +248,22 @@ def compute_hdd_cumulative(tokens, sample_size=42, step=50):
     Returns:
         list: List of dictionaries with 'position' and 'ttr' keys (HDD values)
     """  
+    from math import comb  # Available since Python 3.8, faster and safer
+
     def compute_hdd(slice_tokens):
         freqs = Counter(slice_tokens)
         N = len(slice_tokens)
+        if N == 0 or sample_size > N:
+            return 0.0
         hdd = 0.0
         for word, freq in freqs.items():
-            if freq == 0 or N == 0 or sample_size > N:
-                continue
             try:
-                prob_zero = n_choose_k(N - freq, sample_size) / n_choose_k(N, sample_size)
-                hdd += (1 - prob_zero)
+                prob_zero = comb(N - freq, sample_size) / comb(N, sample_size)
+                hdd += min(1 - prob_zero, 1.0)
             except (ValueError, ZeroDivisionError, OverflowError):
                 continue
         return hdd
+
 
     hdd_series = []
     for i in range(step, len(tokens) + 1, step):
